@@ -96,6 +96,8 @@ struct FVmdParseResult
 {
 	bool bIsSuccess;
 
+	double FramesPerSecond = 30;
+
 	FVmdObject::FHeader Header;
 
 

@@ -12,7 +12,7 @@ FFilmbackImportSettings::FFilmbackImportSettings()
 UMmdUserImportVmdSettings::UMmdUserImportVmdSettings(const FObjectInitializer& Initializer)
 	: Super(Initializer)
 {
-	ImportUniformScale = 10.0f;
+	ImportUniformScale = 8.0f;
 	CameraCutImportType = ECameraCutImportType::OneFrameInterval;
 	CameraCount = 2;
 	bAddMotionBlurKey = false;

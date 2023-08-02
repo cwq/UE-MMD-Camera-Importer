@@ -433,10 +433,25 @@ void FVmdImporter::ImportVmdCameraToExisting(
 	check(CameraPropertyOwnerGuids.Num() == CameraGuids.Num());
 	check(CameraComponents.Num() == CameraGuids.Num());
 
+	uint32 StartCameraFrame = InVmdParseResult.CameraKeyFrames[0].FrameNumber;
+	uint32 EndCameraFrame = InVmdParseResult.CameraKeyFrames.Last().FrameNumber + 1;
 	const TArray<TRange<uint32>> CameraCuts = ImportVmdSettings->CameraCount == 1
-		? TArray{ TRange<uint32>(0, InVmdParseResult.CameraKeyFrames.Last().FrameNumber + 1) }
-	    : ComputeCameraCuts(InVmdParseResult.CameraKeyFrames);
-	
+		                                          ? TArray{TRange<uint32>(StartCameraFrame, EndCameraFrame)}
+		                                          : ComputeCameraCuts(InVmdParseResult.CameraKeyFrames);
+
+	// update sequence DisplayRate
+	MovieScene->SetDisplayRate(FFrameRate(InVmdParseResult.FramesPerSecond, 1));
+	// update sequence range
+	const double RangeStartSeconds = StartCameraFrame / InVmdParseResult.FramesPerSecond;
+	const double RangeEndSeconds = EndCameraFrame / InVmdParseResult.FramesPerSecond;
+	const FFrameRate TickResolution = MovieScene->GetTickResolution();
+	const FFrameNumber StartFrame = TickResolution.AsFrameNumber(RangeStartSeconds);
+	const FFrameNumber EndFrame = TickResolution.AsFrameNumber(RangeEndSeconds);
+	const TRange<FFrameNumber> TimeRange(StartFrame, EndFrame);
+	MovieScene->SetPlaybackRange(TimeRange);
+	MovieScene->SetViewRange(RangeStartSeconds, RangeEndSeconds);
+	MovieScene->SetWorkingRange(RangeStartSeconds, RangeEndSeconds);
+
 	CreateCameraCutTrack(CameraCuts, CameraGuids, InSequence);
 
 	ImportVmdCameraFocalLengthProperty(
