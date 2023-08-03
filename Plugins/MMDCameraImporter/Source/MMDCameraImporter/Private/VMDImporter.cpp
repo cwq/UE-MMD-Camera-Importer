@@ -8,6 +8,7 @@
 #include "LevelEditorViewport.h"
 #include "MMDCameraImporter.h"
 #include "MMDImportHelper.h"
+#include "MovieSceneFolder.h"
 #include "MovieSceneSequence.h"
 #include "MovieSceneToolHelpers.h"
 #include "Framework/Notifications/NotificationManager.h"
@@ -291,6 +292,14 @@ void FVmdImporter::ImportVmdCamera(
 		return;
 	}
 
+	// camera folder
+	UMovieScene* MovieScene = InSequence->GetMovieScene();
+	UMovieSceneFolder* CameraFolder = NewObject<UMovieSceneFolder>( MovieScene, NAME_None, RF_Transactional );
+	CameraFolder->SetFolderName(TEXT("Camera Folder"));
+	MovieScene->Modify();
+	MovieScene->GetRootFolders().Add(CameraFolder);
+	CameraFolder->Modify();
+
 	TArray<FGuid> CameraGuids;
 	TArray<FGuid> CameraCenterGuids;
 	CameraGuids.Reserve(ImportVmdSettings->CameraCount);
@@ -371,6 +380,9 @@ void FVmdImporter::ImportVmdCamera(
 		
 		CameraCenterGuids.Add(NewActorGuids[0]);
 		CameraGuids.Add(NewActorGuids[1]);
+
+		CameraFolder->AddChildObjectBinding(NewActorGuids[0]);
+		CameraFolder->AddChildObjectBinding(NewActorGuids[1]);
 	}
 
 	ImportVmdCameraToExisting(
