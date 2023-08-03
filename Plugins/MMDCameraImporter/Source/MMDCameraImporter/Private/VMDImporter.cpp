@@ -8,6 +8,7 @@
 #include "LevelEditorViewport.h"
 #include "MMDCameraImporter.h"
 #include "MMDImportHelper.h"
+#include "MovieSceneSequence.h"
 #include "MovieSceneToolHelpers.h"
 #include "Framework/Notifications/NotificationManager.h"
 #include "Misc/ScopedSlowTask.h"
@@ -315,32 +316,41 @@ void FVmdImporter::ImportVmdCamera(
 
 		NewCamera->AttachToActor(NewCameraCenter, FAttachmentTransformRules(EAttachmentRule::KeepWorld, true));
 
+		NewCamera->SetActorRelativeRotation(FRotator(0, -90, 0));
+
+		UCineCameraComponent* CineCameraComponent = NewCamera->GetCineCameraComponent();
+		CineCameraComponent->Filmback.SensorWidth = ImportVmdSettings->CameraFilmback.SensorWidth;
+		CineCameraComponent->Filmback.SensorHeight = ImportVmdSettings->CameraFilmback.SensorHeight;
+		CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
+
+		/*
 		{
 			// ReSharper disable once CppUseStructuredBinding
 			const FVmdObject::FCameraKeyFrame FirstFrame = InVmdParseResult.CameraKeyFrames[0];
 			const float UniformScale = ImportVmdSettings->ImportUniformScale;
-			
-			NewCamera->SetActorRelativeLocation(FVector(FirstFrame.Distance * UniformScale, 0, 0));
+
+			// -Distance -> UE Y
+			NewCamera->SetActorRelativeLocation(FVector(0, -FirstFrame.Distance * UniformScale, 0));
 
 			// Position:
-			// X -> Y
-			// Y -> Z
-			// Z -> X
+			//  X -> UE X
+			// -Z -> UE Y
+			//  Y -> UE Z
 			NewCameraCenter->SetActorRelativeLocation(
 				FVector(
-					FirstFrame.Position[2] * UniformScale,
 					FirstFrame.Position[0] * UniformScale,
+					-FirstFrame.Position[2] * UniformScale,
 					FirstFrame.Position[1] * UniformScale));
 
 			// Rotation:
-			// X -> Y
-			// Y -> Z
-			// Z -> X
+			//  X -> UE X Roll
+			// -Z -> UE Y Pitch
+			// -Y -> UE Z Yaw
 			NewCameraCenter->SetActorRelativeRotation(
 				FRotator(
-					FMath::RadiansToDegrees(FirstFrame.Rotation[2]),
-					FMath::RadiansToDegrees(FirstFrame.Rotation[0]),
-					-FMath::RadiansToDegrees(FirstFrame.Rotation[1])));
+					-FMath::RadiansToDegrees(FirstFrame.Rotation[2]),
+					-FMath::RadiansToDegrees(FirstFrame.Rotation[1]),
+					FMath::RadiansToDegrees(FirstFrame.Rotation[0])));
 
 			UCineCameraComponent* CineCameraComponent = NewCamera->GetCineCameraComponent();
 
@@ -352,6 +362,7 @@ void FVmdImporter::ImportVmdCamera(
 
 			CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 		}
+		*/
 
 		TArray<TWeakObjectPtr<AActor>> NewActors;
 		NewActors.Add(NewCameraCenter);
@@ -817,8 +828,8 @@ bool FVmdImporter::ImportVmdCameraTransform(
 			TransformSection->SetRange(TRange<FFrameNumber>::All());
 		}
 
-		FMovieSceneDoubleChannel* LocationXChannel = TransformSection->GetChannelProxy().GetChannel<FMovieSceneDoubleChannel>(0);
-		Channels.Add(LocationXChannel);
+		FMovieSceneDoubleChannel* LocationYChannel = TransformSection->GetChannelProxy().GetChannel<FMovieSceneDoubleChannel>(1);
+		Channels.Add(LocationYChannel);
 	}
 
 	const FFrameRate SampleRate = MovieScene->GetDisplayRate();
@@ -846,7 +857,7 @@ bool FVmdImporter::ImportVmdCameraTransform(
 		},
 		[UniformScale](const double Value)
 		{
-			return Value * UniformScale;
+			return -Value * UniformScale;
 		});
 
 	return true;
@@ -934,7 +945,7 @@ bool FVmdImporter::ImportVmdCameraCenterTransform(
 			LocationXTangentAccessIndices,
 			[](const FVmdObject::FCameraKeyFrame& KeyFrames)
 			{
-				return KeyFrames.Position[2];
+				return KeyFrames.Position[0];
 			},
 			[UniformScale](const double Value)
 			{
@@ -962,11 +973,11 @@ bool FVmdImporter::ImportVmdCameraCenterTransform(
 			LocationYTangentAccessIndices,
 			[](const FVmdObject::FCameraKeyFrame& KeyFrames)
 			{
-				return KeyFrames.Position[0];
+				return KeyFrames.Position[2];
 			},
 			[UniformScale](const double Value)
 			{
-				return Value * UniformScale;
+				return -Value * UniformScale;
 			});
 	}
 
@@ -1017,7 +1028,7 @@ bool FVmdImporter::ImportVmdCameraCenterTransform(
 			RotationTangentAccessIndices,
 			[](const FVmdObject::FCameraKeyFrame& KeyFrames)
 			{
-				return KeyFrames.Rotation[2];
+				return KeyFrames.Rotation[0];
 			},
 			[](const double Value)
 			{
@@ -1034,11 +1045,11 @@ bool FVmdImporter::ImportVmdCameraCenterTransform(
 			RotationTangentAccessIndices,
 			[](const FVmdObject::FCameraKeyFrame& KeyFrames)
 			{
-				return KeyFrames.Rotation[0];
+				return KeyFrames.Rotation[2];
 			},
 			[](const double Value)
 			{
-				return FMath::RadiansToDegrees(Value);
+				return -FMath::RadiansToDegrees(Value);
 			});
 
 		ImportCameraSingleChannel(
