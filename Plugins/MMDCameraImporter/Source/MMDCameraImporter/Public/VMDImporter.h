@@ -51,7 +51,7 @@ struct FVmdObject
 		float Distance;
 		float Position[3];
 		float Rotation[3];
-		int8 Interpolation[24];
+		int8 Interpolation[24]; // (x1,x2,y1,y2) [0,127]  x, y, z, r, dis, fov
 		uint32 ViewAngle;
 		uint8 Perspective; // this value can be reinterpret_cast to bool
 	};
