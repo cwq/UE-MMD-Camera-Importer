@@ -463,7 +463,7 @@ void FVmdImporter::ImportVmdCameraToExisting(
 		                                          : ComputeCameraCuts(InVmdParseResult.CameraKeyFrames);
 
 	// update sequence DisplayRate
-	MovieScene->SetDisplayRate(FFrameRate(InVmdParseResult.FramesPerSecond, 1));
+	// MovieScene->SetDisplayRate(FFrameRate(InVmdParseResult.FramesPerSecond, 1));
 	// update sequence range
 	const double RangeStartSeconds = StartCameraFrame / InVmdParseResult.FramesPerSecond;
 	const double RangeEndSeconds = EndCameraFrame / InVmdParseResult.FramesPerSecond;
