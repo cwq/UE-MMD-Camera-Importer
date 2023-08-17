@@ -192,7 +192,7 @@ private:
 		const UMmdUserImportVmdSettings* ImportVmdSettings
 	);
 
-	static float ComputeFocalLength(const float FieldOfView, const float SensorWidth);
+	static float ComputeFocalLength(const float FieldOfView, const float SensorHeight);
 
 	static TArray<TRange<uint32>> ComputeCameraCuts(
 		const TArray<FVmdObject::FCameraKeyFrame>& CameraKeyFrames

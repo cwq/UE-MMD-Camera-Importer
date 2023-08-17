@@ -368,7 +368,7 @@ void FVmdImporter::ImportVmdCamera(
 			CineCameraComponent->Filmback.SensorHeight = ImportVmdSettings->CameraFilmback.SensorHeight;
 
 			CineCameraComponent->CurrentFocalLength =
-				ComputeFocalLength(FirstFrame.ViewAngle, CineCameraComponent->Filmback.SensorWidth) / 2;
+				ComputeFocalLength(FirstFrame.ViewAngle, CineCameraComponent->Filmback.SensorHeight);
 
 			CineCameraComponent->FocusSettings.FocusMethod = ECameraFocusMethod::Disable;
 		}
@@ -585,7 +585,7 @@ bool FVmdImporter::ImportVmdCameraFocalLengthProperty(
 
 	const FFrameRate SampleRate = MovieScene->GetDisplayRate();
 	const FFrameRate FrameRate = MovieScene->GetTickResolution();
-	const float SensorWidth = InCineCameraComponents.Last()->Filmback.SensorWidth;
+	const float SensorHeight = InCineCameraComponents.Last()->Filmback.SensorHeight;
 	FTangentAccessIndices TangentAccessIndices;
 	{
 		TangentAccessIndices.ArriveTangentX = 21;
@@ -606,9 +606,9 @@ bool FVmdImporter::ImportVmdCameraFocalLengthProperty(
 		{
 			return KeyFrames.ViewAngle;
 		},
-		[SensorWidth](const float Value)
+		[SensorHeight](const float Value)
 		{
-			return ComputeFocalLength(Value, SensorWidth) / 2;
+			return ComputeFocalLength(Value, SensorHeight);
 		});
 	
 	return true;
@@ -1086,10 +1086,11 @@ bool FVmdImporter::ImportVmdCameraCenterTransform(
 	return true;
 }
 
-float FVmdImporter::ComputeFocalLength(const float FieldOfView, const float SensorWidth)
+float FVmdImporter::ComputeFocalLength(const float FieldOfView, const float SensorHeight)
 {
 	// Focal Length = (Film or sensor width) / (2 * tan(FOV / 2))
-	return (SensorWidth / 2.f) / FMath::Tan(FMath::DegreesToRadians(FieldOfView / 2.f));
+	// FieldOfView is vertical, use SensorHeight
+	return (SensorHeight / 2.f) / FMath::Tan(FMath::DegreesToRadians(FieldOfView / 2.f));
 }
 
 TArray<TRange<uint32>> FVmdImporter::ComputeCameraCuts(const TArray<FVmdObject::FCameraKeyFrame>& CameraKeyFrames)
