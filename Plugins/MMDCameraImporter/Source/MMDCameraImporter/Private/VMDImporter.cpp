@@ -54,7 +54,8 @@ bool FVmdImporter::IsValidVmdFile()
 		UE_LOG(LogMMDCameraImporter, Error, TEXT("File is not vmd format"));
 		return false;
 	}
-	
+
+	/*
 	int64 Offset = sizeof(FVmdObject::FHeader);
 
 	if (FileSize < Offset + static_cast<int64>(sizeof(uint32)))
@@ -142,7 +143,7 @@ bool FVmdImporter::IsValidVmdFile()
 	{
 		UE_LOG(LogMMDCameraImporter, Warning, TEXT("File seems to be corrupt or additional data exists"));
 	}
-	
+	*/
 	return true;
 }
 
